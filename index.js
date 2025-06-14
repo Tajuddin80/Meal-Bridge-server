@@ -1,10 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require('cors')
+const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion } = require("mongodb");
-
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.MONGODB_URI, {
@@ -26,7 +25,6 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 //   credential: admin.credential.cert(serviceAccount)
 // });
 
-
 app.use(cors());
 app.use(express.json());
 
@@ -34,12 +32,12 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-  const db = client.db("mealBridge");
-
-
+    const db = client.db("mealBridge");
 
     const usersCollection = db.collection("allUsers");
 
+    const foodCollection = db.collection("foodCollection");
+ const reviewCollection = db.collection("reviews");
 
     // add user to database
     app.post("/adduser", async (req, res) => {
@@ -48,7 +46,30 @@ async function run() {
       res.send(result);
     });
 
+    // featured food by quantity
+    app.get("/featuredfood", async (req, res) => {
+      const result = await foodCollection
+        .find()
+        .sort({ foodQuantity: -1 })
+        .limit(6)
+        .toArray();
+      res.status(200).send(result);
+    });
 
+    app.get("/allfoods", async (req, res) => {
+      const result = await foodCollection.find().toArray();
+      res.status(200).send(result);
+    });
+
+    app.post('/addreviews', async(req, res)=>{
+      const newReview = req.body
+      const result = await reviewCollection.insertOne(newReview)
+      res.send(result)
+    })
+       app.get("/allreviews", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.status(200).send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
