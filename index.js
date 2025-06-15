@@ -35,9 +35,9 @@ async function run() {
     const db = client.db("mealBridge");
 
     const usersCollection = db.collection("allUsers");
-
     const foodCollection = db.collection("foodCollection");
     const reviewCollection = db.collection("reviews");
+    const requestedFoodCollection = db.collection("requestedFoods");
 
     // add user to database
     app.post("/adduser", async (req, res) => {
@@ -75,25 +75,26 @@ async function run() {
       res.status(200).send(result);
     });
 
-    app.get("/allfoods/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await foodCollection.find(query).toArray();
-      res.send(result);
+    // Example Express route
+    app.get("/allFoods/:id", async (req, res) => {
+      const { id } = req.params;
+      const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+      if (!food) {
+        return res.status(404).send({ message: "Food not found" });
+      }
+      res.send(food);
     });
 
-   
     app.put("/updateFood/:id", async (req, res) => {
-      const id = req.params.id; 
-      const updatedFood = req.body; 
+      const id = req.params.id;
+      const updatedFood = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: updatedFood,
       };
       const result = await foodCollection.updateOne(filter, updateDoc);
-      res.send(result); 
+      res.send(result);
     });
-
 
     app.delete("/allfoods/:id", async (req, res) => {
       const id = req.params.id;
@@ -117,6 +118,15 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.status(200).send(result);
     });
+
+
+
+
+    app.post('/requestedFood', async(req, res)=>{
+      const newRequest = req.body
+      const result = await requestedFoodCollection.insertOne(newRequest)
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
