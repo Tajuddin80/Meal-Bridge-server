@@ -37,7 +37,7 @@ async function run() {
     const usersCollection = db.collection("allUsers");
 
     const foodCollection = db.collection("foodCollection");
- const reviewCollection = db.collection("reviews");
+    const reviewCollection = db.collection("reviews");
 
     // add user to database
     app.post("/adduser", async (req, res) => {
@@ -57,16 +57,23 @@ async function run() {
     });
 
     app.get("/allfoods", async (req, res) => {
-      const result = await foodCollection.find().toArray();
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+         query = {"donor.donorEmail" : email}
+      }
+      const result = await foodCollection
+        .find(query)
+        .toArray();
       res.status(200).send(result);
     });
 
-    app.post('/addreviews', async(req, res)=>{
-      const newReview = req.body
-      const result = await reviewCollection.insertOne(newReview)
-      res.send(result)
-    })
-       app.get("/allreviews", async (req, res) => {
+    app.post("/addreviews", async (req, res) => {
+      const newReview = req.body;
+      const result = await reviewCollection.insertOne(newReview);
+      res.send(result);
+    });
+    app.get("/allreviews", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.status(200).send(result);
     });
