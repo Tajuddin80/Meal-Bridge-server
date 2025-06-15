@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.MONGODB_URI, {
@@ -45,11 +45,15 @@ async function run() {
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
     });
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     // featured food by quantity
     app.get("/featuredfood", async (req, res) => {
       const result = await foodCollection
-        .find()
+        .find({ foodStatus: "available" })
         .sort({ foodQuantity: -1 })
         .limit(6)
         .toArray();
@@ -57,15 +61,51 @@ async function run() {
     });
 
     app.get("/allfoods", async (req, res) => {
-      const email = req.query.email;
+      const { email, id } = req.query;
       let query = {};
-      if (email) {
-         query = {"donor.donorEmail" : email}
+
+      if (id) {
+        query = { _id: new ObjectId(id) };
+      } else if (email) {
+        query = { "donor.donorEmail": email };
+      } else {
+        query = { foodStatus: "available" };
       }
-      const result = await foodCollection
-        .find(query)
-        .toArray();
+      const result = await foodCollection.find(query).toArray();
       res.status(200).send(result);
+    });
+
+    app.get("/allfoods/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodCollection.find(query).toArray();
+      res.send(result);
+    });
+
+   
+    app.put("/updateFood/:id", async (req, res) => {
+      const id = req.params.id; 
+      const updatedFood = req.body; 
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: updatedFood,
+      };
+      const result = await foodCollection.updateOne(filter, updateDoc);
+      res.send(result); 
+    });
+
+
+    app.delete("/allfoods/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.post("/addFood", async (req, res) => {
+      const newFood = req.body;
+      const result = await foodCollection.insertOne(newFood);
+      res.send(result);
     });
 
     app.post("/addreviews", async (req, res) => {
