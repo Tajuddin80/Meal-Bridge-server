@@ -23,8 +23,6 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-
-
 const verifyFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers?.authorization;
 
@@ -32,7 +30,6 @@ const verifyFirebaseToken = async (req, res, next) => {
     return res.status(401).send({ message: "unauthorized access" });
   }
   const token = authHeader.split(" ")[1];
-
 
   try {
     const decoded = await admin.auth().verifyIdToken(token);
@@ -80,17 +77,16 @@ async function run() {
     });
 
     // --- Food related routes ---
-app.post("/addfood", verifyFirebaseToken, async (req, res) => {
-  const newFood = req.body;
-  newFood.donor = {
-    donorEmail: req.decoded.email,
-    donorName: req.decoded.name || "Unknown",
-    donorImage: req.decoded.picture || "",
-  };
-  const result = await foodCollection.insertOne(newFood);
-  res.send(result);
-});
-
+    app.post("/addfood", verifyFirebaseToken, async (req, res) => {
+      const newFood = req.body;
+      newFood.donor = {
+        donorEmail: req.decoded.email,
+        donorName: req.decoded.name || "Unknown",
+        donorImage: req.decoded.picture || "",
+      };
+      const result = await foodCollection.insertOne(newFood);
+      res.send(result);
+    });
 
     // featured food get request
     app.get("/featuredfood", async (req, res) => {
@@ -125,25 +121,21 @@ app.post("/addfood", verifyFirebaseToken, async (req, res) => {
       res.send(food);
     });
 
-
     app.put("/updateFood/:id", verifyFirebaseToken, async (req, res) => {
-  const { id } = req.params;
-  const food = await foodCollection.findOne({ _id: new ObjectId(id) });
-  if (!food) return res.status(404).send({ message: "Food not found" });
+      const { id } = req.params;
+      const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+      if (!food) return res.status(404).send({ message: "Food not found" });
 
-  if (food.donor.donorEmail !== req.decoded.email) {
-    return res.status(403).send({ message: "Forbidden: Not your food" });
-  }
+      if (food.donor.donorEmail !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden: Not your food" });
+      }
 
-  const result = await foodCollection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: req.body }
-  );
-  res.send(result);
-});
-
-
-
+      const result = await foodCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: req.body }
+      );
+      res.send(result);
+    });
 
     // update foods amount
     app.patch("/updateFoodAmount/:id", async (req, res) => {
@@ -164,54 +156,79 @@ app.post("/addfood", verifyFirebaseToken, async (req, res) => {
       }
     });
     // delete request by id
-    app.delete("/allfoods/:id", async (req, res) => {
+    app.delete("/allfoods/:id", verifyFirebaseToken, async (req, res) => {
+      // Optionally, also check if the requester is the donor
       const { id } = req.params;
+      const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+      if (!food) return res.status(404).send({ message: "Food not found" });
+
+      if (food.donor.donorEmail !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden: Not your food" });
+      }
+
       const result = await foodCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
     //  requested food related apis
-    app.post("/requestedFood", async (req, res) => {
-      const result = await requestedFoodCollection.insertOne(req.body);
-      res.send(result);
-    });
 
 
-app.get("/requestedFood", verifyFirebaseToken, async (req, res) => {
-  const email = req.decoded.email; // Always use decoded email
 
-  try {
-    const query = { "requestedUser.email": email };
-    const result = await requestedFoodCollection.find(query).toArray();
-    res.send(result);
-  } catch (error) {
-    console.error("Error fetching requested food:", error);
-    res.status(500).send({ message: "Server error fetching requested food" });
-  }
+
+
+
+
+
+
+
+
+   app.post("/requestedFood", verifyFirebaseToken, async (req, res) => {
+  // Ensure requestedUser email matches decoded token email
+  const requestedFood = req.body;
+  requestedFood.requestedUser = {
+    email: req.decoded.email,
+    name: req.decoded.name || "Unknown",
+    image: req.decoded.picture || "",
+  };
+  const result = await requestedFoodCollection.insertOne(requestedFood);
+  res.send(result);
 });
 
 
 
-    app.delete("/requestedFood/:id", async (req, res) => {
-      const { id } = req.params;
+
+
+
+
+
+
+    app.get("/requestedFood", verifyFirebaseToken, async (req, res) => {
+      const email = req.decoded.email; // Always use decoded email
+
       try {
-        const result = await requestedFoodCollection.deleteOne({
-          _id: new ObjectId(id),
-        });
-        if (result.deletedCount === 1) {
-          res.send({ success: true, message: "Deleted successfully" });
-        } else {
-          res
-            .status(404)
-            .send({ success: false, message: "Request not found" });
-        }
+        const query = { "requestedUser.email": email };
+        const result = await requestedFoodCollection.find(query).toArray();
+        res.send(result);
       } catch (error) {
-        console.error("Error deleting request:", error);
+        console.error("Error fetching requested food:", error);
         res
           .status(500)
-          .send({ success: false, message: "Internal server error" });
+          .send({ message: "Server error fetching requested food" });
       }
     });
+
+  app.delete("/requestedFood/:id", verifyFirebaseToken, async (req, res) => {
+  const { id } = req.params;
+  const request = await requestedFoodCollection.findOne({ _id: new ObjectId(id) });
+  if (!request) return res.status(404).send({ success: false, message: "Request not found" });
+
+  if (request.requestedUser.email !== req.decoded.email) {
+    return res.status(403).send({ success: false, message: "Forbidden: Not your request" });
+  }
+
+  const result = await requestedFoodCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send({ success: true, message: "Deleted successfully", result });
+});
 
     await client.db("admin").command({ ping: 1 });
     console.log("Connected to MongoDB!");
