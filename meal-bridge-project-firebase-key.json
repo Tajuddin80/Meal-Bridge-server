@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "meal-bridge-project",
+  "private_key_id": "fa7b23e9d4d55dceab77d7a1fcaecccf2709991f",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDl/q3CK+sazLrw\nn/ILQ8Krn2BKk/SFEV6+AVC/OaLH6Z+PW8SmYjgh3PoaUCFEVMhkHRjZSHuMU9m2\nnU6Mjmyczy5kpXN9UT9CpVAvv6Qz11FmCux5qNKroilQIxOkQV6Vmj70ikm10Pt7\nz5eJVjeK/7d1RQD3J2i3KL8GkOcj2dP88KaWsM8KiYJf+O9T4GX/CYKWwadezlfV\nJAetzN+Bi7piUhFGtJcbD4jiesmUQMORDeaCltVvdd5awUoL7/OiM4vIciVBgLW2\nfx/YNFsMIPZUOuQ5KVtVHRCdhG1Ax5WNzCSJaqgsFUFGikvLRqE2/hWMAgT4bHY8\nzf+NdyLfAgMBAAECggEARJWAjTF5h2FbsZuQmwlWyMTa+wJJ3VCDtxc/U/bE8uZY\n3XAZISCS6o4xypzwfqblpu0CVvEFXqA2gP1ByipCezRQ+lRYLxuGSMJxOfvk5Eym\nCk7hm5nbULEnrqz3E3km0mfPtC50spIiHBaYcqzSHVIKDB9KnWkUEeJFrJiTRJ4E\niUmUm9uHQhsDJitiyIuqf3f6IBQpmfP+V4CCOPaAMReKcaYX3j2mXoBjkzYdTd44\nStEOQSHHxTx/eWzRm1jw7waoLX9zSgHIQFCUJzcaXl/4rhfKjJ+cRBUCC2VzmZiZ\n6TqRubQIbf6LadPnmW1BvRqDJfagjP4DxF75pe7KQQKBgQD7ZF5FJdsCoOnc5D8J\nLgbwJWbuQI6BuV0vcCGzI7M+DnHf1DcGxzTIIsadHrHPKr4unqAs5FYyCTQFYImK\nGUWysHuhsO2a5Ch2IPYNr2x1DWWUQGWKNpF1Ud9MZWmr7OurWgzjbaB7dtkEXVW4\n82o+NRDBmO3xmcPOzw95RnogIQKBgQDqNef8bRmctay6s6qWJrVHitLG86ZcGT7M\n1kEyjbt1Jy5LdKWIiQq4ATjEu+qcR9nfo4o6bzZepBHDhZCCp22xHTapKBEqGtaq\noWfYTWPdRxnrkSyz2lmjjP15LlNvnQd5/t83nv7lzQzaM+S9omQvau2MHPkVlqoB\no35+qvTi/wKBgQDp0eTMs/UMcNaUGcd3plPVsTQXjfv+NIazxLvTfvUMVysbYKr9\npvM04wOQyCfh5IOXoPqiRo7VYzH7flrvE6p8FSIotgOJ+YSYuvegqvVZuegtB+hp\nsW+Bi3ECAaFTw70/VzZ9ok2OCHC5WoaMy/qZeYnoR3GpMbep93UQ+7hDgQKBgEjr\n8cf5XBEby6TxzbokYSreQVQqhnCEd7YlO3V3BZerVFGwBt4k9Q5navpuG9T+1go4\njBA3kjETWmiLDHxxjsindN5kGDwI0S+dQ4zoQ6Cgw6RBti5lXKV8f2scjmPg+3Pz\ndCKIQYrhNhA2OhEFH7ZXz5BhcPhUyafq9LaRmd+XAoGBANolCAOho1/yTmGFd016\nLNvivLaqEpCpG2tKdquIpd57HyEL84D6EFa6NdrpX5LqHS4QYTfaueyTintrei7l\n0Ni3hHcARx0OFaCmCs83txla6m8B836KWKAvnwREfFdniBWBtglCxI2jCVwzAGJC\nvZB38/VwzH5tvuUZOMu4ToqV\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@meal-bridge-project.iam.gserviceaccount.com",
+  "client_id": "102026223183475436537",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40meal-bridge-project.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

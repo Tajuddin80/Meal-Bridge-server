@@ -16,6 +16,34 @@ const client = new MongoClient(process.env.MONGODB_URI, {
   autoSelectFamily: false,
 });
 
+// get from firebase project -> project overview wheel -> project settings -> service account
+const admin = require("firebase-admin");
+const serviceAccount = require("./meal-bridge-project-firebase-key.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+
+
+const verifyFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers?.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  // console.log(token);
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    // console.log("Decoded data ", decoded);
+    req.decoded = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+};
+
 app.use(cors());
 app.use(express.json());
 
@@ -29,7 +57,8 @@ async function run() {
     const reviewCollection = db.collection("reviews");
     const requestedFoodCollection = db.collection("requestedFoods");
 
-    // --- User routes ---
+    // user related apis
+
     app.post("/adduser", async (req, res) => {
       const result = await usersCollection.insertOne(req.body);
       res.send(result);
@@ -40,12 +69,25 @@ async function run() {
       res.send(result);
     });
 
-    // --- Food routes ---
-    app.post("/addFood", async (req, res) => {
-      const result = await foodCollection.insertOne(req.body);
+    // --- Review related apis ---
+    app.post("/addreviews", async (req, res) => {
+      const result = await reviewCollection.insertOne(req.body);
       res.send(result);
     });
 
+    app.get("/allreviews", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    });
+
+    // --- Food related routes ---
+    app.post("/addfood", async (req, res) => {
+      const newFood = req.body;
+      const result = await foodCollection.insertOne(newFood);
+      res.send(result);
+    });
+
+    // featured food get request
     app.get("/featuredfood", async (req, res) => {
       const result = await foodCollection
         .find({ foodStatus: "available" })
@@ -56,27 +98,25 @@ async function run() {
     });
 
     app.get("/allfoods", async (req, res) => {
-      const { email, id } = req.query;
-      let query = {};
+      const foods = await foodCollection
+        .find({ foodStatus: "available" })
+        .toArray();
+      res.send(foods);
+    });
 
-      if (id) {
-        query = { _id: new ObjectId(id) };
-      } else if (email) {
-        query = { "donor.donorEmail": email };
-      } else {
-        query = { foodStatus: "available" };
-      }
-
-      const result = await foodCollection.find(query).toArray();
+    app.get("/myfoods", verifyFirebaseToken, async (req, res) => {
+      const email = req.decoded.email;
+      const result = await foodCollection
+        .find({ "donor.donorEmail": email })
+        .toArray();
       res.send(result);
     });
 
     app.get("/allFoods/:id", async (req, res) => {
-      const { id } = req.params;
-      const food = await foodCollection.findOne({ _id: new ObjectId(id) });
-      if (!food) {
-        return res.status(404).send({ message: "Food not found" });
-      }
+      const food = await foodCollection.findOne({
+        _id: new ObjectId(req.params.id),
+      });
+      if (!food) return res.status(404).send({ message: "Food not found" });
       res.send(food);
     });
 
@@ -88,7 +128,7 @@ async function run() {
       );
       res.send(result);
     });
-
+    // update foods amount
     app.patch("/updateFoodAmount/:id", async (req, res) => {
       const { id } = req.params;
       const { foodQuantity } = req.body;
@@ -96,56 +136,45 @@ async function run() {
       if (foodQuantity === undefined) {
         return res.status(400).send({ error: "foodQuantity is required" });
       }
-
       const result = await foodCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: { foodQuantity } }
       );
-
       if (result.modifiedCount > 0) {
         res.send({ success: true, message: "Food quantity updated", result });
       } else {
         res.send({ success: false, message: "No document updated", result });
       }
     });
-
+    // delete request by id
     app.delete("/allfoods/:id", async (req, res) => {
       const { id } = req.params;
       const result = await foodCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
-    // --- Reviews ---
-    app.post("/addreviews", async (req, res) => {
-      const result = await reviewCollection.insertOne(req.body);
-      res.send(result);
-    });
-
-    app.get("/allreviews", async (req, res) => {
-      const result = await reviewCollection.find().toArray();
-      res.send(result);
-    });
-
-   
+    //  requested food related apis
     app.post("/requestedFood", async (req, res) => {
       const result = await requestedFoodCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.get("/requestedFood", async (req, res) => {
-      const email = req.query.email;
-      let query = {};
-      if (email) {
-        query = { "requestedUser.email": email };
-        const result = await requestedFoodCollection.find(query).toArray();
-        res.send(result);
-      } else {
-        const result = await requestedFoodCollection.find().toArray();
-        res.send(result);
-      }
-    });
 
-  
+app.get("/requestedFood", verifyFirebaseToken, async (req, res) => {
+  const email = req.decoded.email; // Always use decoded email
+
+  try {
+    const query = { "requestedUser.email": email };
+    const result = await requestedFoodCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching requested food:", error);
+    res.status(500).send({ message: "Server error fetching requested food" });
+  }
+});
+
+
+
     app.delete("/requestedFood/:id", async (req, res) => {
       const { id } = req.params;
       try {
@@ -167,11 +196,9 @@ async function run() {
       }
     });
 
-    
     await client.db("admin").command({ ping: 1 });
     console.log("Connected to MongoDB!");
   } finally {
-   
   }
 }
 
