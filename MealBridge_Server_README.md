@@ -65,24 +65,7 @@ The MealBridge server handles:
 
 ---
 
-## 📁 Endpoints
 
-Here are some key API routes:
-
-| Method | Endpoint                   | Description                                   | Auth |
-|--------|----------------------------|-----------------------------------------------|------|
-| `POST` | `/adduser`                  | Add a new user                                | ❌    |
-| `GET`  | `/users`                    | Fetch all users                               | ❌    |
-| `POST` | `/addfood`                  | Add food item (donor only)                    | ✅    |
-| `GET`  | `/featuredfood`             | Get top featured foods                        | ❌    |
-| `GET`  | `/allfoods`                 | Get all available foods                       | ❌    |
-| `GET`  | `/myfoods`                  | Get foods added by logged-in donor            | ✅    |
-| `PUT`  | `/updateFood/:id`           | Update specific food (only owner can update)  | ✅    |
-| `DELETE` | `/allfoods/:id`           | Delete food (only owner can delete)           | ✅    |
-| `POST` | `/requestedFood`            | Request a food                                | ✅ (optional) |
-| `GET`  | `/requestedFood`            | Get requested foods by logged-in user         | ✅    |
-
----
 
 ## 🔑 Security
 
@@ -92,34 +75,8 @@ Here are some key API routes:
 
 ---
 
-## 🛠️ Environment Variables
 
-Create a `.env` file:
 
-\`\`\`env
-PORT=3000
-MONGODB_URI=your_mongodb_connection_string
-\`\`\`
-
----
-
-## 🏁 How to Run
-
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`
-
-The server runs on `http://localhost:3000` by default.
-
----
-
-## 📌 Notes
-
-- Ensure you have a `meal-bridge-project-firebase-key.json` file for Firebase Admin SDK.
-- The server uses **strict MongoDB queries** and modern API standards.
-
----
 
 ## 👨‍💻 Author
 
