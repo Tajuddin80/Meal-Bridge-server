@@ -126,15 +126,11 @@ async function run() {
       res.send(result);
     });
 
-    // --- Requested food routes ---
+   
     app.post("/requestedFood", async (req, res) => {
       const result = await requestedFoodCollection.insertOne(req.body);
       res.send(result);
     });
-
-
-  
-
 
     app.get("/requestedFood", async (req, res) => {
       const email = req.query.email;
@@ -143,34 +139,39 @@ async function run() {
         query = { "requestedUser.email": email };
         const result = await requestedFoodCollection.find(query).toArray();
         res.send(result);
-      }
-      else{
-            const result = await requestedFoodCollection.find().toArray();
-      res.send(result);
+      } else {
+        const result = await requestedFoodCollection.find().toArray();
+        res.send(result);
       }
     });
 
-    // ✅ Correct DELETE route
+  
     app.delete("/requestedFood/:id", async (req, res) => {
       const { id } = req.params;
       try {
-        const result = await requestedFoodCollection.deleteOne({ _id: new ObjectId(id) });
+        const result = await requestedFoodCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
         if (result.deletedCount === 1) {
           res.send({ success: true, message: "Deleted successfully" });
         } else {
-          res.status(404).send({ success: false, message: "Request not found" });
+          res
+            .status(404)
+            .send({ success: false, message: "Request not found" });
         }
       } catch (error) {
         console.error("Error deleting request:", error);
-        res.status(500).send({ success: false, message: "Internal server error" });
+        res
+          .status(500)
+          .send({ success: false, message: "Internal server error" });
       }
     });
 
-    // --- Ping ---
+    
     await client.db("admin").command({ ping: 1 });
     console.log("Connected to MongoDB!");
   } finally {
-    // keep connection alive
+   
   }
 }
 
