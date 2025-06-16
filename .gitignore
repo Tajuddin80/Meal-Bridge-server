@@ -1,3 +1,5 @@
 .env
 node_modules
-meal-bridge-key.json
+meal-bridge-project-firebase-key.json
+vercel.json
+.vercel

@@ -32,11 +32,10 @@ const verifyFirebaseToken = async (req, res, next) => {
     return res.status(401).send({ message: "unauthorized access" });
   }
   const token = authHeader.split(" ")[1];
-  // console.log(token);
+
 
   try {
     const decoded = await admin.auth().verifyIdToken(token);
-    // console.log("Decoded data ", decoded);
     req.decoded = decoded;
     next();
   } catch (err) {
@@ -81,11 +80,17 @@ async function run() {
     });
 
     // --- Food related routes ---
-    app.post("/addfood", async (req, res) => {
-      const newFood = req.body;
-      const result = await foodCollection.insertOne(newFood);
-      res.send(result);
-    });
+app.post("/addfood", verifyFirebaseToken, async (req, res) => {
+  const newFood = req.body;
+  newFood.donor = {
+    donorEmail: req.decoded.email,
+    donorName: req.decoded.name || "Unknown",
+    donorImage: req.decoded.picture || "",
+  };
+  const result = await foodCollection.insertOne(newFood);
+  res.send(result);
+});
+
 
     // featured food get request
     app.get("/featuredfood", async (req, res) => {
@@ -120,14 +125,26 @@ async function run() {
       res.send(food);
     });
 
-    app.put("/updateFood/:id", async (req, res) => {
-      const { id } = req.params;
-      const result = await foodCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: req.body }
-      );
-      res.send(result);
-    });
+
+    app.put("/updateFood/:id", verifyFirebaseToken, async (req, res) => {
+  const { id } = req.params;
+  const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+  if (!food) return res.status(404).send({ message: "Food not found" });
+
+  if (food.donor.donorEmail !== req.decoded.email) {
+    return res.status(403).send({ message: "Forbidden: Not your food" });
+  }
+
+  const result = await foodCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: req.body }
+  );
+  res.send(result);
+});
+
+
+
+
     // update foods amount
     app.patch("/updateFoodAmount/:id", async (req, res) => {
       const { id } = req.params;
