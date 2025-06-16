@@ -5,7 +5,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(process.env.MONGODB_URI, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -17,20 +16,11 @@ const client = new MongoClient(process.env.MONGODB_URI, {
   autoSelectFamily: false,
 });
 
-// const admin = require("firebase-admin");
-
-// const serviceAccount = require("./meal-bridge-key.json");
-
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
-
 app.use(cors());
 app.use(express.json());
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const db = client.db("mealBridge");
 
@@ -39,25 +29,30 @@ async function run() {
     const reviewCollection = db.collection("reviews");
     const requestedFoodCollection = db.collection("requestedFoods");
 
-    // add user to database
+    // --- User routes ---
     app.post("/adduser", async (req, res) => {
-      const newUser = req.body;
-      const result = await usersCollection.insertOne(newUser);
+      const result = await usersCollection.insertOne(req.body);
       res.send(result);
     });
+
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
-    // featured food by quantity
+    // --- Food routes ---
+    app.post("/addFood", async (req, res) => {
+      const result = await foodCollection.insertOne(req.body);
+      res.send(result);
+    });
+
     app.get("/featuredfood", async (req, res) => {
       const result = await foodCollection
         .find({ foodStatus: "available" })
         .sort({ foodQuantity: -1 })
         .limit(6)
         .toArray();
-      res.status(200).send(result);
+      res.send(result);
     });
 
     app.get("/allfoods", async (req, res) => {
@@ -71,11 +66,11 @@ async function run() {
       } else {
         query = { foodStatus: "available" };
       }
+
       const result = await foodCollection.find(query).toArray();
-      res.status(200).send(result);
+      res.send(result);
     });
 
-    // Example Express route
     app.get("/allFoods/:id", async (req, res) => {
       const { id } = req.params;
       const food = await foodCollection.findOne({ _id: new ObjectId(id) });
@@ -86,58 +81,99 @@ async function run() {
     });
 
     app.put("/updateFood/:id", async (req, res) => {
-      const id = req.params.id;
-      const updatedFood = req.body;
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: updatedFood,
-      };
-      const result = await foodCollection.updateOne(filter, updateDoc);
+      const { id } = req.params;
+      const result = await foodCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: req.body }
+      );
       res.send(result);
+    });
+
+    app.patch("/updateFoodAmount/:id", async (req, res) => {
+      const { id } = req.params;
+      const { foodQuantity } = req.body;
+
+      if (foodQuantity === undefined) {
+        return res.status(400).send({ error: "foodQuantity is required" });
+      }
+
+      const result = await foodCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { foodQuantity } }
+      );
+
+      if (result.modifiedCount > 0) {
+        res.send({ success: true, message: "Food quantity updated", result });
+      } else {
+        res.send({ success: false, message: "No document updated", result });
+      }
     });
 
     app.delete("/allfoods/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await foodCollection.deleteOne(query);
+      const { id } = req.params;
+      const result = await foodCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
-    app.post("/addFood", async (req, res) => {
-      const newFood = req.body;
-      const result = await foodCollection.insertOne(newFood);
-      res.send(result);
-    });
-
+    // --- Reviews ---
     app.post("/addreviews", async (req, res) => {
-      const newReview = req.body;
-      const result = await reviewCollection.insertOne(newReview);
+      const result = await reviewCollection.insertOne(req.body);
       res.send(result);
     });
+
     app.get("/allreviews", async (req, res) => {
       const result = await reviewCollection.find().toArray();
-      res.status(200).send(result);
+      res.send(result);
+    });
+
+    // --- Requested food routes ---
+    app.post("/requestedFood", async (req, res) => {
+      const result = await requestedFoodCollection.insertOne(req.body);
+      res.send(result);
     });
 
 
+  
 
 
-    app.post('/requestedFood', async(req, res)=>{
-      const newRequest = req.body
-      const result = await requestedFoodCollection.insertOne(newRequest)
-      res.send(result)
-    })
+    app.get("/requestedFood", async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { "requestedUser.email": email };
+        const result = await requestedFoodCollection.find(query).toArray();
+        res.send(result);
+      }
+      else{
+            const result = await requestedFoodCollection.find().toArray();
+      res.send(result);
+      }
+    });
 
-    // Send a ping to confirm a successful connection
+    // ✅ Correct DELETE route
+    app.delete("/requestedFood/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await requestedFoodCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 1) {
+          res.send({ success: true, message: "Deleted successfully" });
+        } else {
+          res.status(404).send({ success: false, message: "Request not found" });
+        }
+      } catch (error) {
+        console.error("Error deleting request:", error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+      }
+    });
+
+    // --- Ping ---
     await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("Connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    // keep connection alive
   }
 }
+
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
@@ -145,5 +181,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });
