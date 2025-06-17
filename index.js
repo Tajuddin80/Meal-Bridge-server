@@ -18,7 +18,10 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 
 // get from firebase project -> project overview wheel -> project settings -> service account
 const admin = require("firebase-admin");
-const serviceAccount = require("./meal-bridge-project-firebase-key.json");
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
+  "utf8"
+);
+const serviceAccount = JSON.parse(decoded);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -45,7 +48,7 @@ app.use(express.json());
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db("mealBridge");
 
     const usersCollection = db.collection("allUsers");
@@ -172,35 +175,17 @@ async function run() {
 
     //  requested food related apis
 
-
-
-
-
-
-
-
-
-
-
-   app.post("/requestedFood", verifyFirebaseToken, async (req, res) => {
-  // Ensure requestedUser email matches decoded token email
-  const requestedFood = req.body;
-  requestedFood.requestedUser = {
-    email: req.decoded.email,
-    name: req.decoded.name || "Unknown",
-    image: req.decoded.picture || "",
-  };
-  const result = await requestedFoodCollection.insertOne(requestedFood);
-  res.send(result);
-});
-
-
-
-
-
-
-
-
+    app.post("/requestedFood", verifyFirebaseToken, async (req, res) => {
+      // Ensure requestedUser email matches decoded token email
+      const requestedFood = req.body;
+      requestedFood.requestedUser = {
+        email: req.decoded.email,
+        name: req.decoded.name || "Unknown",
+        image: req.decoded.picture || "",
+      };
+      const result = await requestedFoodCollection.insertOne(requestedFood);
+      res.send(result);
+    });
 
     app.get("/requestedFood", verifyFirebaseToken, async (req, res) => {
       const email = req.decoded.email; // Always use decoded email
@@ -217,20 +202,29 @@ async function run() {
       }
     });
 
-  app.delete("/requestedFood/:id", verifyFirebaseToken, async (req, res) => {
-  const { id } = req.params;
-  const request = await requestedFoodCollection.findOne({ _id: new ObjectId(id) });
-  if (!request) return res.status(404).send({ success: false, message: "Request not found" });
+    app.delete("/requestedFood/:id", verifyFirebaseToken, async (req, res) => {
+      const { id } = req.params;
+      const request = await requestedFoodCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!request)
+        return res
+          .status(404)
+          .send({ success: false, message: "Request not found" });
 
-  if (request.requestedUser.email !== req.decoded.email) {
-    return res.status(403).send({ success: false, message: "Forbidden: Not your request" });
-  }
+      if (request.requestedUser.email !== req.decoded.email) {
+        return res
+          .status(403)
+          .send({ success: false, message: "Forbidden: Not your request" });
+      }
 
-  const result = await requestedFoodCollection.deleteOne({ _id: new ObjectId(id) });
-  res.send({ success: true, message: "Deleted successfully", result });
-});
+      const result = await requestedFoodCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send({ success: true, message: "Deleted successfully", result });
+    });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Connected to MongoDB!");
   } finally {
   }
