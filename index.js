@@ -105,7 +105,7 @@ async function run() {
       }
     });
 
-    app.get("/allreviews", verifyFirebaseToken, async (req, res) => {
+    app.get("/allreviews", async (req, res) => {
       try {
         const result = await reviewCollection.find().toArray();
         res.send(result);
