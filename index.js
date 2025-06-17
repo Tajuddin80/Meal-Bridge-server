@@ -91,14 +91,28 @@ async function run() {
       }
     });
     // --- Review related apis ---
-    app.post("/addreviews", async (req, res) => {
-      const result = await reviewCollection.insertOne(req.body);
-      res.send(result);
+    app.post("/addreviews", verifyFirebaseToken, async (req, res) => {
+      try {
+        const reviewData = req.body;
+
+        reviewData.userEmail = req.decoded.email;
+
+        const result = await reviewCollection.insertOne(reviewData);
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to add review:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
     });
 
-    app.get("/allreviews", async (req, res) => {
-      const result = await reviewCollection.find().toArray();
-      res.send(result);
+    app.get("/allreviews", verifyFirebaseToken, async (req, res) => {
+      try {
+        const result = await reviewCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
     });
 
     // --- Food related routes ---
