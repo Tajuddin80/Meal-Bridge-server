@@ -141,23 +141,35 @@ async function run() {
     });
 
     // update foods amount
-    app.patch("/updateFoodAmount/:id", async (req, res) => {
-      const { id } = req.params;
-      const { foodQuantity } = req.body;
+app.patch("/updateFoodAmount/:id", verifyFirebaseToken, async (req, res) => {
+  const { id } = req.params;
+  const { foodQuantity } = req.body;
 
-      if (foodQuantity === undefined) {
-        return res.status(400).send({ error: "foodQuantity is required" });
-      }
-      const result = await foodCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: { foodQuantity } }
-      );
-      if (result.modifiedCount > 0) {
-        res.send({ success: true, message: "Food quantity updated", result });
-      } else {
-        res.send({ success: false, message: "No document updated", result });
-      }
-    });
+  if (foodQuantity === undefined) {
+    return res.status(400).send({ error: "foodQuantity is required" });
+  }
+
+  const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+  if (!food) {
+    return res.status(404).send({ success: false, message: "Food not found" });
+  }
+
+  if (food.donor.donorEmail !== req.decoded.email) {
+    return res.status(403).send({ success: false, message: "Forbidden: Not your food" });
+  }
+
+  const result = await foodCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { foodQuantity } }
+  );
+
+  if (result.modifiedCount > 0) {
+    res.send({ success: true, message: "Food quantity updated", result });
+  } else {
+    res.send({ success: false, message: "No document updated", result });
+  }
+});
+
     // delete request by id
     app.delete("/allfoods/:id", verifyFirebaseToken, async (req, res) => {
       // Optionally, also check if the requester is the donor
