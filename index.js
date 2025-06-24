@@ -188,29 +188,16 @@ async function run() {
           return res.status(400).send({ error: "foodQuantity is required" });
         }
 
-        const food = await foodCollection.findOne({ _id: new ObjectId(id) });
-        if (!food) {
-          return res
-            .status(404)
-            .send({ success: false, message: "Food not found" });
-        }
-
-        if (food.donor.donorEmail !== req.decoded.email) {
-          return res
-            .status(403)
-            .send({ success: false, message: "Forbidden: Not your food" });
-        }
-
         const result = await foodCollection.updateOne(
           { _id: new ObjectId(id) },
           { $set: { foodQuantity } }
         );
 
-        if (result.modifiedCount > 0) {
-          res.send({ success: true, message: "Food quantity updated", result });
-        } else {
-          res.send({ success: false, message: "No document updated", result });
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ error: "Food not found or no change" });
         }
+
+        res.send({ success: true });
       }
     );
 
