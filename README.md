@@ -7,7 +7,7 @@
 
 ## 🎯 Purpose
 
-The MealBridge server handles:
+The MealBridge server handle:
 
 ✅ Secure food item management (CRUD)  
 ✅ Firebase-based authentication + JWT verification  
