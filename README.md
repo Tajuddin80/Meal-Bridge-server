@@ -24,12 +24,12 @@ The MealBridge server handles:
 ---
 ## 🌐 **Client site github repo**
 
-👉 🚀 https://github.com/Programming-Hero-Web-Course4/b11a11-client-side-Tajuddin-green
+👉 🚀 https://github.com/Tajuddin80/Meal-Bridge-client
 
 ---
 ## 🌐 **Server site github repo**
 
-👉 🚀 https://github.com/Programming-Hero-Web-Course4/b11a11-server-side-Tajuddin-green
+👉 🚀 https://github.com/Tajuddin80/Meal-Bridge-server
 
 
 ---
